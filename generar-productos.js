@@ -129,7 +129,7 @@ const RefAire = {
     "7885",
     "6712",
   ],
-  grupo8: ["157", "4130", "4127", "166"],
+  grupo8: ["157", "4130", "4127", "8005"],
   grupo9: ["1628", "1627", "1156", "1155", "630", "1306"],
   grupo10: ["515", "513", "514"],
   grupo11: ["5456", "1479", "1654", "1366", "22", "4192"],
@@ -298,7 +298,7 @@ console.log('Productos cargados:', productos.length);
 
     // 3. Definir la ruta del archivo
     const directorio =
-      "C:\\Users\\thiag\\Documents\\jsrefrigeracion-catalogo\\src";
+      "C:\\Users\\thiag\\Documents\\jsrefrigeracion-catalogo\\src\\static";
     const rutaArchivo = path.join(directorio, "productos.js");
 
     // 4. Crear directorio si no existe
