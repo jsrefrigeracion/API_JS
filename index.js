@@ -18,6 +18,9 @@ const dbConfig = {
   },
 };
 
+const queryActualizarStock = (idArticulo, stock) =>
+  `UPDATE [GeVe].[dbo].[Articulo] SET StockActual = ${stock} WHERE IdArticulo = ${idArticulo}`;
+
 const queryProductos = (
   idsArticulos
 ) => `SELECT a.IdArticulo AS Codigo, a.Descripcion AS Nombre, 
@@ -66,6 +69,14 @@ LEFT JOIN [GeVe].[dbo].[ArticuloImagen] AS ai
 WHERE a.Eliminado = 0
 AND a.IdArticulo IN (${idArticulo})
 GROUP BY a.IdArticulo;`;
+
+const queryProductosStock = (idArticulo) => `
+SELECT 
+    a.IdArticulo, 
+    a.StockActual
+FROM [GeVe].[dbo].[Articulo] AS a
+WHERE a.Eliminado = 0
+AND a.IdArticulo IN (${idArticulo})`;
 // 📦 Endpoint para obtener productos
 app.get("/api/productos", async (req, res) => {
   let pool;
@@ -161,6 +172,31 @@ app.get("/api/productosImagen", async (req, res) => {
   }
 });
 
+app.get("/api/productosStock", async (req, res) => {
+  let { idArticulo } = req.query;
+  try {
+    const pool = await sql.connect(dbConfig);
+    const request = await pool.request().query(queryProductosStock(idArticulo));
+    const result = await request;
+    res.json({
+      success: true,
+      data: await result.recordset,
+      total: await result.recordset.length,
+      idArticulo: idArticulo,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor",
+      detalle: error.message,
+    });
+  } finally {
+    if (pool) {
+      await pool.close();
+    }
+  }
+});
+
 // Endpoint de prueba de conexión simple
 app.get("/api/test-connection", async (req, res) => {
   try {
@@ -182,12 +218,50 @@ app.get("/api/test-connection", async (req, res) => {
   }
 });
 
+app.post("/api/actualizar-stock", async (req, res) => {
+  const { idArticulo, stock } = req.body;
+
+  if (!idArticulo || stock === undefined) {
+    return res.status(400).json({
+      success: false,
+      error: "Faltan datos: idArticulo o stock.",
+    });
+  }
+
+  let pool; // declaramos acá para poder cerrarlo luego
+
+  try {
+    pool = await sql.connect(dbConfig);
+
+    const query = queryActualizarStock(idArticulo, stock);
+    const result = await pool.request().query(query);
+
+    res.json({
+      success: true,
+      message: "Stock actualizado correctamente",
+      data: result.recordset,
+    });
+  } catch (error) {
+    console.error("Error al actualizar el stock:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor",
+      detalle: error.message,
+    });
+  } finally {
+    if (pool) {
+      await pool.close();
+    }
+  }
+});
+
 // Servidor corriendo en puerto 3000
 app.listen(3000, () => {
   console.log("🚀 Servidor backend escuchando en http://localhost:3000");
   console.log("📊 Endpoints disponibles:");
-  console.log("   http://localhost:3000/api/productos");
+  console.log(`   ${API_URL}/api/productos`);
   console.log(`   ${API_URL}/api/productosCodigo`);
   console.log(`   ${API_URL}/api/productosImagen`);
-  console.log("   http://localhost:3000/api/test-connection");
+  console.log(`   ${API_URL}/api/productosStock`);
+  console.log(`   ${API_URL}/api/test-connection`);
 });
