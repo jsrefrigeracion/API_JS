@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 const dbConfig = {
   server: "SERVER-S\\SQLEXPRESS",
   database: "GeVe",
@@ -259,9 +260,9 @@ app.post("/api/actualizar-stock", async (req, res) => {
 app.listen(3000, () => {
   console.log("🚀 Servidor backend escuchando en http://localhost:3000");
   console.log("📊 Endpoints disponibles:");
-  console.log(`   ${API_URL}/api/productos`);
-  console.log(`   ${API_URL}/api/productosCodigo`);
-  console.log(`   ${API_URL}/api/productosImagen`);
-  console.log(`   ${API_URL}/api/productosStock`);
-  console.log(`   ${API_URL}/api/test-connection`);
+  console.log(`   /api/productos`);
+  console.log(`   /api/productosCodigo`);
+  console.log(`   /api/productosImagen`);
+  console.log(`   /api/productosStock`);
+  console.log(`   /api/test-connection`);
 });

@@ -1,3 +1,4 @@
+const precios = require("./precios-manuales.js");
 const path = require("path");
 const fs = require("fs/promises");
 
@@ -135,6 +136,7 @@ const RefAire = {
   grupo11: ["5456", "1479", "1654", "1366", "22", "4192"],
   grupo12: ["1675", "4089", "1677", "1674", "1676", "1561"],
   grupo13: ["65", "6758", "259", "639", "925", "1315"],
+  grupo14: ["445", "7933", "7934", "1357", "1358"]
 };
 
 const RefHeladera = {
@@ -187,12 +189,17 @@ const RefHeladera = {
     "1251",
   ],
 };
+const capacitores = {
+  grupo1: ["1339", "1344", "1346", "1347", "1348", "4268"],
+  grupo2: ["1419", "685", "125", "689", "1205", "1296"]
+}
 
 // Preparar los IDs de productos para la consulta
 const arrRefAires = Object.values(RefAire);
 const arrRefHeladeras = Object.values(RefHeladera);
 const arrLavaSeca = Object.values(lavaSeca);
 const arrCalefaccion = Object.values(calefaccion);
+const arrCapacitores = Object.values(capacitores);
 let arrProductos = [];
 
 // Agregar IDs de aires acondicionados
@@ -215,6 +222,11 @@ arrCalefaccion.forEach((grupo) => {
   arrProductos.push(...grupo);
 });
 
+// Agregar IDs de capacitores
+arrCapacitores.forEach((grupo) => {
+  arrProductos.push(...grupo);
+});
+
 const mapGrupo = arrProductos.join(",");
 
 console.log("🔍 IDs de productos a consultar:", mapGrupo);
@@ -223,7 +235,7 @@ console.log(
     arrRefAires.flat().length
   } + Heladeras: ${arrRefHeladeras.flat().length}) + Lavadoras y Secadoras: ${
     arrLavaSeca.flat().length
-  } + Calefacción: ${arrCalefaccion.flat().length}`
+  } + Calefacción: ${arrCalefaccion.flat().length} + Capacitores: ${arrCapacitores.flat().length})`
 );
 
 // Función para obtener datos de la API
@@ -261,6 +273,7 @@ async function generarArchivoJS() {
     const idsHeladeras = new Set(arrRefHeladeras.flat().map(String));
     const idsLavaSeca = new Set(arrLavaSeca.flat().map(String));
     const idsCalefaccion = new Set(arrCalefaccion.flat().map(String));
+    const idsCapacitores = new Set(arrCapacitores.flat().map(String));
 
     const productosAires = datos.filter((p) => idsAires.has(String(p.Codigo)));
     const productosHeladeras = datos.filter((p) =>
@@ -272,6 +285,18 @@ async function generarArchivoJS() {
     const productosCalefaccion = datos.filter((p) =>
       idsCalefaccion.has(String(p.Codigo))
     );
+    const productosCapacitores = datos.filter((p) =>
+      idsCapacitores.has(String(p.Codigo))
+    );
+
+    precios.map((precio) =>{
+      for (const producto of productosLavaSeca) {
+        if(precio.Codigo === producto.Codigo){
+          producto.PrecioTecnico = precio.PrecioTecnico
+        }
+      }
+    })
+
 
     // 3. Crear el contenido del archivo JS
     const fechaGeneracion = new Date().toLocaleString();
@@ -279,26 +304,31 @@ async function generarArchivoJS() {
     const heladerasJSON = JSON.stringify(productosHeladeras, null, 2);
     const lavaSecaJSON = JSON.stringify(productosLavaSeca, null, 2);
     const calefaccionJSON = JSON.stringify(productosCalefaccion, null, 2);
+    const capacitoresJSON = JSON.stringify(productosCapacitores, null, 2);
+
+
 
     const contenido = `// Archivo generado automáticamente
 // Fecha de generación: ${fechaGeneracion}
 // Incluye: Aires acondicionados,  Heladeras y Lavadoras y Secadoras.
 
 const productosAires = ${airesJSON};
+const productosCapacitores = ${capacitoresJSON};
 const productosHeladeras = ${heladerasJSON};
 const productosLavaSeca = ${lavaSecaJSON};
 const productosCalefaccion = ${calefaccionJSON};
-const productos = [...productosAires, ...productosHeladeras, ...productosLavaSeca, ...productosCalefaccion];
+const productos = [...productosAires, ...productosCapacitores, ...productosHeladeras, ...productosLavaSeca, ...productosCalefaccion];
 
 // Exportar para uso en otros módulos
-export { productosAires, productosHeladeras, productosLavaSeca, productosCalefaccion, productos };
+export { productosAires, productosCapacitores, productosHeladeras, productosLavaSeca, productosCalefaccion, productos };
 
 console.log('Productos cargados:', productos.length);
 `;
 
     // 3. Definir la ruta del archivo
-    const directorio =
-      "C:\\Users\\thiag\\Documents\\jsrefrigeracion-catalogo\\src\\static";
+     const directorio =
+      "C:\\JSREFRIGERACION\\WEB\\listaDePreciosTecnicos\\src\\static";
+
     const rutaArchivo = path.join(directorio, "productos.js");
 
     // 4. Crear directorio si no existe
